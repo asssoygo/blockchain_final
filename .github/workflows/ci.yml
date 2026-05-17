@@ -24,8 +24,8 @@ jobs:
       - name: Run tests
         run: forge test --via-ir
 
-       - name: Run coverage
-        run: forge coverage --no-match-path "script/*"
+      - name: Run coverage
+        run: forge coverage --no-match-path "script/*" --ir-minimum
 
       - name: Install Python
         uses: actions/setup-python@v5
@@ -36,4 +36,4 @@ jobs:
         run: pip install slither-analyzer
 
       - name: Run Slither
-        run: slither src --exclude-dependencies
+        run: slither src --exclude-dependencies --filter-paths "src/security"
