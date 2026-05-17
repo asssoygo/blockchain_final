@@ -9,77 +9,119 @@
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>DeFi Super-App</h1>
-      <p>AMM + Vault + DAO Governance on Arbitrum Sepolia</p>
-      <button id="connectBtn">Connect Wallet</button>
-      <p id="wallet">Wallet: not connected</p>
-      <p id="network">Network: -</p>
+    <header class="hero">
+      <div>
+        <h1>DeFi Super-App</h1>
+        <p>AMM + ERC-4626 Vault + DAO Governance on Arbitrum Sepolia</p>
+      </div>
+
+      <div class="wallet-panel">
+        <button id="connectBtn">Connect Wallet</button>
+        <button id="refreshBtn">Refresh Dashboard</button>
+        <p id="wallet">Wallet: not connected</p>
+        <p id="network">Network: -</p>
+      </div>
     </header>
 
-    <section class="card">
-      <h2>Protocol Contracts</h2>
-      <p><b>GovernanceToken:</b> 0x9Dc80829f5D95b8aBC89e2b2711Ce75Bfa6dDc67</p>
-      <p><b>Mock Asset:</b> 0xa0CC573865B6800f9E9577b39B289FFe0cB7F8C9</p>
-      <p><b>YieldVault:</b> 0x10C38C37455084Bb060d7c385145b6039F99bb6b</p>
-      <p><b>GameItems:</b> 0x20a91c4E223f3670aCD6863B60c6aC9bFAa52de8</p>
-      <p><b>Governor:</b> 0x320E10Ab8531908dEb19927612EDD82fff3E9A79</p>
-      <p><b>AMMFactory:</b> 0xFD24fd97BD869819Dc77bc4bB92F28E8C3687353</p>
+    <section class="stats-grid">
+      <div class="stat-card">
+        <span>Governance Balance</span>
+        <strong id="statGovBalance">-</strong>
+      </div>
+      <div class="stat-card">
+        <span>Voting Power</span>
+        <strong id="statVotingPower">-</strong>
+      </div>
+      <div class="stat-card">
+        <span>Vault Assets</span>
+        <strong id="statVaultAssets">-</strong>
+      </div>
+      <div class="stat-card">
+        <span>Network</span>
+        <strong>Arbitrum Sepolia</strong>
+      </div>
     </section>
 
     <section class="grid">
       <div class="card">
         <h2>Governance Token</h2>
-        <button id="loadGovBtn">Load Token Data</button>
         <p id="govBalance">Balance: -</p>
         <p id="votingPower">Voting Power: -</p>
-        <button id="delegateBtn">Delegate Votes to Myself</button>
+        <button id="loadGovBtn">Load Token Data</button>
+        <button id="delegateBtn">Delegate Votes</button>
       </div>
 
       <div class="card">
         <h2>Vault</h2>
-        <button id="loadVaultBtn">Load Vault Data</button>
         <p id="vaultAsset">Asset: -</p>
         <p id="assetBalance">My Asset Balance: -</p>
         <p id="totalAssets">Vault Total Assets: -</p>
-        <p id="shareBalance">My Vault Shares: -</p>
+        <p id="shareBalance">My Shares: -</p>
 
-        <input id="depositAmount" type="text" placeholder="Amount, example: 10" />
-        <button id="approveVaultBtn">Approve Vault</button>
-        <button id="depositVaultBtn">Deposit to Vault</button>
+        <input id="vaultAmount" type="text" placeholder="Amount, e.g. 10" />
+        <div class="button-row">
+          <button id="loadVaultBtn">Load Vault</button>
+          <button id="approveVaultBtn">Approve</button>
+          <button id="depositVaultBtn">Deposit</button>
+          <button id="withdrawVaultBtn">Withdraw</button>
+        </div>
       </div>
 
       <div class="card">
         <h2>Game Items</h2>
-        <button id="loadItemsBtn">Load Items</button>
         <p id="goldBalance">Gold ID 1: -</p>
         <p id="woodBalance">Wood ID 2: -</p>
         <p id="ironBalance">Iron ID 3: -</p>
-        <p id="swordBalance">Legendary Sword ID 100: -</p>
-        <p id="shieldBalance">Dragon Shield ID 101: -</p>
+        <p id="swordBalance">Sword ID 100: -</p>
+        <p id="shieldBalance">Shield ID 101: -</p>
 
-        <button id="craftSwordBtn">Craft Legendary Sword</button>
-        <button id="craftShieldBtn">Craft Dragon Shield</button>
+        <div class="hint">
+          Sword needs 10 GOLD + 5 IRON. Shield needs 15 WOOD + 5 IRON.
+        </div>
+
+        <button id="loadItemsBtn">Load Items</button>
+        <button id="craftSwordBtn">Craft Sword</button>
+        <button id="craftShieldBtn">Craft Shield</button>
       </div>
 
       <div class="card">
         <h2>Governance</h2>
-        <button id="loadGovernorBtn">Load Governor Info</button>
         <p id="votingDelay">Voting Delay: -</p>
         <p id="votingPeriod">Voting Period: -</p>
         <p id="proposalThreshold">Proposal Threshold: -</p>
+        <button id="loadGovernorBtn">Load Governor</button>
       </div>
 
+    <div class="card">
+        <h2>Proposals</h2>
+        <p class="hint">Enter a Proposal ID to check state and vote</p>
+        <input id="proposalIdInput" type="text" placeholder="Proposal ID (uint256)" />
+        <div class="button-row">
+          <button id="loadProposalBtn">Load State</button>
+          <button id="voteForBtn">Vote For</button>
+          <button id="voteAgainstBtn">Vote Against</button>
+          <button id="voteAbstainBtn">Abstain</button>
+        </div>
+        <p id="proposalState">State: -</p>
+        <p id="proposalVoted">Voted: -</p>
+      </div>
+      
       <div class="card">
         <h2>AMM Factory</h2>
-        <button id="loadFactoryBtn">Load Factory Info</button>
         <p id="factoryOwner">Owner: -</p>
-        <p id="pairCount">Pair Count: -</p>
+        <p id="firstPair">First Pair: -</p>
+
+        <input id="tokenAInput" type="text" placeholder="Token A address" />
+        <input id="tokenBInput" type="text" placeholder="Token B address" />
+
+        <button id="loadFactoryBtn">Load Factory</button>
+        <button id="createPairBtn">Create Pair</button>
       </div>
 
       <div class="card">
-        <h2>Transaction Status</h2>
+        <h2>Transaction Log</h2>
         <p id="status">Status: waiting...</p>
+        <div id="txLog" class="tx-log"></div>
       </div>
     </section>
   </div>

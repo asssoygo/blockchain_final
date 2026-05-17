@@ -70,11 +70,11 @@ contract Deploy is Script {
         Box box = new Box(address(timelock));
 
         PriceOracle oracle = new PriceOracle(
-            0x0000000000000000000000000000000000000001,
-            3600,
-            "ETH/USD",
-            address(timelock)
-        );
+    0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165,  // ETH/USD Arbitrum Sepolia
+    3600,
+    "ETH/USD",
+    address(timelock)
+);
 
         bytes32 proposerRole = timelock.PROPOSER_ROLE();
         bytes32 executorRole = timelock.EXECUTOR_ROLE();

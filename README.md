@@ -264,6 +264,30 @@ GitHub Actions pipeline automatically runs:
 Asylkhan Kozhanov
 Aldiyar Bazarbayev
 Alikhan Sekenov
+
+---
+
+## Documentation
+
+- [Architecture Document](docs/architecture.md)
+- [Security Audit Report](docs/audit-report.md)  
+- [Gas Optimization Report](docs/gas-report.md)
+
+---
+
+## Arbiscan Links
+
+| Contract | Verified Link |
+|---|---|
+| GovernanceToken | https://sepolia.arbiscan.io/address/0x9Dc80829f5D95b8aBC89e2b2711Ce75Bfa6dDc67#code |
+| ProtocolGovernor | https://sepolia.arbiscan.io/address/0x320E10Ab8531908dEb19927612EDD82fff3E9A79#code |
+| ProtocolTimelock | https://sepolia.arbiscan.io/address/0x630F2044d9555C3E68a1E4183C77869457f249FA#code |
+| Treasury Proxy | https://sepolia.arbiscan.io/address/0xdb7546b18971fc3FAb96022ee6029A267F305d03#code |
+| AMMFactory | https://sepolia.arbiscan.io/address/0xFD24fd97BD869819Dc77bc4bB92F28E8C3687353#code |
+| YieldVault | https://sepolia.arbiscan.io/address/0x10C38C37455084Bb060d7c385145b6039F99bb6b#code |
+| GameItems | https://sepolia.arbiscan.io/address/0x20a91c4E223f3670aCD6863B60c6aC9bFAa52de8#code |
+| PriceOracle | https://sepolia.arbiscan.io/address/0xAA2F89a0f2df921B12e33EB7a8B79401dAbE4736#code |
+| Box | https://sepolia.arbiscan.io/address/0xFFCE959eea953C7360f07aBB9bA042E41126021a#code |
 =======
 # blockchain_final
 >>>>>>> 710709c97ead30238beeb8646ead17a4cc9de064

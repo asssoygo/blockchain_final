@@ -4,57 +4,108 @@ const ADDRESSES = {
   yieldVault: "0x10C38C37455084Bb060d7c385145b6039F99bb6b",
   gameItems: "0x20a91c4E223f3670aCD6863B60c6aC9bFAa52de8",
   governor: "0x320E10Ab8531908dEb19927612EDD82fff3E9A79",
-  ammFactory: "0xFD24fd97BD869819Dc77bc4bB92F28E8C3687353"
+  ammFactory: "0xFD24fd97BD869819Dc77bc4bB92F28E8C3687353",
+  tokenA: "0x11A8E2B59f5a8E7C5C5b9A1698d860Bb42Dceb34",
+  tokenB: "0xe1c5c42fe18f2B96Ec22C5c02a8a900d6f16Be45"
 };
 
 const ARBITRUM_SEPOLIA_CHAIN_ID = "0x66eee";
+const EXPLORER = "https://sepolia.arbiscan.io/tx/";
 
 const erc20Abi = [
-  "function balanceOf(address owner) view returns (uint256)",
-  "function allowance(address owner, address spender) view returns (uint256)",
-  "function approve(address spender, uint256 amount) returns (bool)",
+  "function balanceOf(address) view returns (uint256)",
+  "function allowance(address,address) view returns (uint256)",
+  "function approve(address,uint256) returns (bool)",
   "function decimals() view returns (uint8)",
   "function symbol() view returns (string)"
 ];
 
 const govTokenAbi = [
-  "function balanceOf(address owner) view returns (uint256)",
-  "function getVotes(address account) view returns (uint256)",
-  "function delegate(address delegatee)"
+  "function balanceOf(address) view returns (uint256)",
+  "function getVotes(address) view returns (uint256)",
+  "function delegate(address)"
 ];
 
 const vaultAbi = [
   "function asset() view returns (address)",
   "function totalAssets() view returns (uint256)",
-  "function balanceOf(address owner) view returns (uint256)",
-  "function deposit(uint256 assets, address receiver) returns (uint256)"
+  "function balanceOf(address) view returns (uint256)",
+  "function deposit(uint256,address) returns (uint256)",
+  "function withdraw(uint256,address,address) returns (uint256)"
 ];
 
 const erc1155Abi = [
-  "function balanceOf(address account, uint256 id) view returns (uint256)",
-  "function craft(uint256 nftIdToMint)"
+  "function balanceOf(address,uint256) view returns (uint256)",
+  "function craft(uint256)"
 ];
 
 const governorAbi = [
   "function votingDelay() view returns (uint256)",
   "function votingPeriod() view returns (uint256)",
-  "function proposalThreshold() view returns (uint256)"
+  "function proposalThreshold() view returns (uint256)",
+  "function state(uint256) view returns (uint8)",
+  "function castVote(uint256,uint8) returns (uint256)",
+  "function hasVoted(uint256,address) view returns (bool)"
 ];
 
 const factoryAbi = [
   "function owner() view returns (address)",
   "function allPairs(uint256) view returns (address)",
-  "function getPair(address,address) view returns (address)",
-  "function createPair(address,address) returns (address)",
-  "function createPairDeterministic(address,address,bytes32) returns (address)"
+  "function createPair(address,address) returns (address)"
 ];
 
 let provider;
 let signer;
 let userAddress;
 
-function setStatus(message) {
-  document.getElementById("status").innerText = `Status: ${message}`;
+function $(id) {
+  return document.getElementById(id);
+}
+
+function setStatus(message, type = "pending") {
+  $("status").innerHTML = `Status: <span class="${type}">${message}</span>`;
+}
+
+function addLog(message, hash = null, type = "pending") {
+  const div = document.createElement("div");
+  div.className = "tx-item";
+  div.innerHTML = hash
+    ? `<span class="${type}">${message}</span><br><a href="${EXPLORER + hash}" target="_blank">${hash}</a>`
+    : `<span class="${type}">${message}</span>`;
+  $("txLog").prepend(div);
+}
+
+async function connectWallet() {
+  try {
+    if (!window.ethereum) {
+      alert("MetaMask not found");
+      return;
+    }
+
+    provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+
+    const network = await provider.getNetwork();
+
+    if (Number(network.chainId) !== 421614) {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: ARBITRUM_SEPOLIA_CHAIN_ID }]
+      });
+      provider = new ethers.BrowserProvider(window.ethereum);
+    }
+
+    signer = await provider.getSigner();
+    userAddress = await signer.getAddress();
+
+    $("wallet").innerText = `Wallet: ${userAddress}`;
+    $("network").innerText = "Network: Arbitrum Sepolia";
+
+    setStatus("Wallet connected", "success");
+    await refreshDashboard();
+  } catch (err) {
+    handleError(err);
+  }
 }
 
 async function ensureConnected() {
@@ -63,162 +114,170 @@ async function ensureConnected() {
   }
 }
 
-async function connectWallet() {
-  if (!window.ethereum) {
-    alert("MetaMask not found");
-    return;
-  }
+function handleError(err) {
+  console.error(err);
 
-  provider = new ethers.BrowserProvider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
+  let msg = err?.reason || err?.shortMessage || err?.message || "Unknown error";
 
-  const network = await provider.getNetwork();
+  if (msg.includes("user rejected")) msg = "Transaction rejected by user";
+  if (msg.includes("insufficient funds")) msg = "Insufficient ETH for gas";
+  if (msg.includes("InsufficientResources")) msg = "Not enough ERC1155 resources for crafting";
+  if (msg.includes("ERC20InsufficientAllowance")) msg = "Approve tokens first";
+  if (msg.includes("ERC20InsufficientBalance")) msg = "Not enough token balance";
 
-  if (Number(network.chainId) !== 421614) {
-    setStatus("Switching to Arbitrum Sepolia...");
+  setStatus(msg, "error");
+  addLog(msg, null, "error");
+}
 
-    try {
-      await window.ethereum.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: ARBITRUM_SEPOLIA_CHAIN_ID }]
-      });
-    } catch (error) {
-      alert("Please add/switch to Arbitrum Sepolia in MetaMask.");
-      console.error(error);
-      return;
-    }
-  }
-
-  signer = await provider.getSigner();
-  userAddress = await signer.getAddress();
-
-  document.getElementById("wallet").innerText = `Wallet: ${userAddress}`;
-  document.getElementById("network").innerText = "Network: Arbitrum Sepolia";
-  setStatus("Wallet connected");
+async function waitTx(tx, label) {
+  setStatus(`${label} pending...`);
+  addLog(`${label} submitted`, tx.hash, "pending");
+  await tx.wait();
+  setStatus(`${label} confirmed`, "success");
+  addLog(`${label} confirmed`, tx.hash, "success");
 }
 
 async function loadGovernanceData() {
   await ensureConnected();
 
-  const token = new ethers.Contract(
-    ADDRESSES.governanceToken,
-    govTokenAbi,
-    provider
-  );
+  const token = new ethers.Contract(ADDRESSES.governanceToken, govTokenAbi, provider);
 
   const balance = await token.balanceOf(userAddress);
   const votes = await token.getVotes(userAddress);
 
-  document.getElementById("govBalance").innerText =
-    `Balance: ${ethers.formatEther(balance)}`;
+  const b = ethers.formatEther(balance);
+  const v = ethers.formatEther(votes);
 
-  document.getElementById("votingPower").innerText =
-    `Voting Power: ${ethers.formatEther(votes)}`;
+  $("govBalance").innerText = `Balance: ${b}`;
+  $("votingPower").innerText = `Voting Power: ${v}`;
+  $("statGovBalance").innerText = b;
+  $("statVotingPower").innerText = v;
 
-  setStatus("Governance token data loaded");
+  setStatus("Governance token data loaded", "success");
 }
 
 async function delegateVotes() {
-  await ensureConnected();
+  try {
+    await ensureConnected();
 
-  const token = new ethers.Contract(
-    ADDRESSES.governanceToken,
-    govTokenAbi,
-    signer
-  );
+    const token = new ethers.Contract(ADDRESSES.governanceToken, govTokenAbi, signer);
+    const tx = await token.delegate(userAddress);
 
-  setStatus("Delegating votes...");
-  const tx = await token.delegate(userAddress);
-  await tx.wait();
-
-  setStatus(`Votes delegated. Tx: ${tx.hash}`);
-  await loadGovernanceData();
+    await waitTx(tx, "Delegate votes");
+    await loadGovernanceData();
+  } catch (err) {
+    handleError(err);
+  }
 }
 
 async function loadVaultData() {
   await ensureConnected();
 
-  const vault = new ethers.Contract(
-    ADDRESSES.yieldVault,
-    vaultAbi,
-    provider
-  );
+  const vault = new ethers.Contract(ADDRESSES.yieldVault, vaultAbi, provider);
+  const assetAddress = await vault.asset();
 
-  const asset = await vault.asset();
+  const asset = new ethers.Contract(assetAddress, erc20Abi, provider);
+
+  const assetBalance = await asset.balanceOf(userAddress);
   const totalAssets = await vault.totalAssets();
   const shares = await vault.balanceOf(userAddress);
 
-  const assetToken = new ethers.Contract(asset, erc20Abi, provider);
-  const assetBalance = await assetToken.balanceOf(userAddress);
+  $("vaultAsset").innerText = `Asset: ${assetAddress}`;
+  $("assetBalance").innerText = `My Asset Balance: ${ethers.formatEther(assetBalance)}`;
+  $("totalAssets").innerText = `Vault Total Assets: ${ethers.formatEther(totalAssets)}`;
+  $("shareBalance").innerText = `My Shares: ${ethers.formatEther(shares)}`;
+  $("statVaultAssets").innerText = ethers.formatEther(totalAssets);
 
-  document.getElementById("vaultAsset").innerText = `Asset: ${asset}`;
-  document.getElementById("assetBalance").innerText =
-    `My Asset Balance: ${ethers.formatEther(assetBalance)}`;
-  document.getElementById("totalAssets").innerText =
-    `Vault Total Assets: ${ethers.formatEther(totalAssets)}`;
-  document.getElementById("shareBalance").innerText =
-    `My Vault Shares: ${ethers.formatEther(shares)}`;
-
-  setStatus("Vault data loaded");
+  setStatus("Vault data loaded", "success");
 }
 
 async function approveVault() {
-  await ensureConnected();
+  try {
+    await ensureConnected();
 
-  const amountInput = document.getElementById("depositAmount").value;
-  if (!amountInput) {
-    alert("Enter deposit amount");
-    return;
+    const amountText = $("vaultAmount").value;
+    if (!amountText) return alert("Enter amount first");
+
+    const amount = ethers.parseEther(amountText);
+    const asset = new ethers.Contract(ADDRESSES.mockAsset, erc20Abi, signer);
+
+    const balance = await asset.balanceOf(userAddress);
+    if (balance < amount) {
+      setStatus("Not enough mUSD balance. Deposit cannot be executed.", "error");
+      return;
+    }
+
+    const tx = await asset.approve(ADDRESSES.yieldVault, amount);
+    await waitTx(tx, "Approve vault");
+  } catch (err) {
+    handleError(err);
   }
-
-  const amount = ethers.parseEther(amountInput);
-
-  const asset = new ethers.Contract(
-    ADDRESSES.mockAsset,
-    erc20Abi,
-    signer
-  );
-
-  setStatus("Approving vault...");
-  const tx = await asset.approve(ADDRESSES.yieldVault, amount);
-  await tx.wait();
-
-  setStatus(`Vault approved. Tx: ${tx.hash}`);
 }
 
-async function depositToVault() {
-  await ensureConnected();
+async function depositVault() {
+  try {
+    await ensureConnected();
 
-  const amountInput = document.getElementById("depositAmount").value;
-  if (!amountInput) {
-    alert("Enter deposit amount");
-    return;
+    const amountText = $("vaultAmount").value;
+    if (!amountText) return alert("Enter amount first");
+
+    const amount = ethers.parseEther(amountText);
+
+    const asset = new ethers.Contract(ADDRESSES.mockAsset, erc20Abi, provider);
+    const balance = await asset.balanceOf(userAddress);
+    const allowance = await asset.allowance(userAddress, ADDRESSES.yieldVault);
+
+    if (balance < amount) {
+      setStatus("Not enough mUSD balance for deposit", "error");
+      return;
+    }
+
+    if (allowance < amount) {
+      setStatus("Approve vault first", "error");
+      return;
+    }
+
+    const vault = new ethers.Contract(ADDRESSES.yieldVault, vaultAbi, signer);
+    const tx = await vault.deposit(amount, userAddress);
+
+    await waitTx(tx, "Vault deposit");
+    await loadVaultData();
+  } catch (err) {
+    handleError(err);
   }
+}
 
-  const amount = ethers.parseEther(amountInput);
+async function withdrawVault() {
+  try {
+    await ensureConnected();
 
-  const vault = new ethers.Contract(
-    ADDRESSES.yieldVault,
-    vaultAbi,
-    signer
-  );
+    const amountText = $("vaultAmount").value;
+    if (!amountText) return alert("Enter amount first");
 
-  setStatus("Depositing to vault...");
-  const tx = await vault.deposit(amount, userAddress);
-  await tx.wait();
+    const amount = ethers.parseEther(amountText);
 
-  setStatus(`Deposit completed. Tx: ${tx.hash}`);
-  await loadVaultData();
+    const vault = new ethers.Contract(ADDRESSES.yieldVault, vaultAbi, provider);
+    const shares = await vault.balanceOf(userAddress);
+
+    if (shares <= 0n) {
+      setStatus("No vault shares to withdraw", "error");
+      return;
+    }
+
+    const vaultWithSigner = new ethers.Contract(ADDRESSES.yieldVault, vaultAbi, signer);
+    const tx = await vaultWithSigner.withdraw(amount, userAddress, userAddress);
+
+    await waitTx(tx, "Vault withdraw");
+    await loadVaultData();
+  } catch (err) {
+    handleError(err);
+  }
 }
 
 async function loadItems() {
   await ensureConnected();
 
-  const items = new ethers.Contract(
-    ADDRESSES.gameItems,
-    erc1155Abi,
-    provider
-  );
+  const items = new ethers.Contract(ADDRESSES.gameItems, erc1155Abi, provider);
 
   const gold = await items.balanceOf(userAddress, 1);
   const wood = await items.balanceOf(userAddress, 2);
@@ -226,105 +285,182 @@ async function loadItems() {
   const sword = await items.balanceOf(userAddress, 100);
   const shield = await items.balanceOf(userAddress, 101);
 
-  document.getElementById("goldBalance").innerText = `Gold ID 1: ${gold}`;
-  document.getElementById("woodBalance").innerText = `Wood ID 2: ${wood}`;
-  document.getElementById("ironBalance").innerText = `Iron ID 3: ${iron}`;
-  document.getElementById("swordBalance").innerText =
-    `Legendary Sword ID 100: ${sword}`;
-  document.getElementById("shieldBalance").innerText =
-    `Dragon Shield ID 101: ${shield}`;
+  $("goldBalance").innerText = `Gold ID 1: ${gold}`;
+  $("woodBalance").innerText = `Wood ID 2: ${wood}`;
+  $("ironBalance").innerText = `Iron ID 3: ${iron}`;
+  $("swordBalance").innerText = `Sword ID 100: ${sword}`;
+  $("shieldBalance").innerText = `Shield ID 101: ${shield}`;
 
-  setStatus("Game items loaded");
+  setStatus("Game items loaded", "success");
 }
 
 async function craftSword() {
-  await ensureConnected();
+  try {
+    await ensureConnected();
 
-  const items = new ethers.Contract(
-    ADDRESSES.gameItems,
-    erc1155Abi,
-    signer
-  );
+    const itemsRead = new ethers.Contract(ADDRESSES.gameItems, erc1155Abi, provider);
+    const gold = await itemsRead.balanceOf(userAddress, 1);
+    const iron = await itemsRead.balanceOf(userAddress, 3);
 
-  setStatus("Crafting Legendary Sword...");
-  const tx = await items.craft(100);
-  await tx.wait();
+    if (gold < 10n || iron < 5n) {
+      setStatus("Cannot craft Sword: need 10 GOLD + 5 IRON", "error");
+      return;
+    }
 
-  setStatus(`Legendary Sword crafted. Tx: ${tx.hash}`);
-  await loadItems();
+    const items = new ethers.Contract(ADDRESSES.gameItems, erc1155Abi, signer);
+    const tx = await items.craft(100);
+
+    await waitTx(tx, "Craft Sword");
+    await loadItems();
+  } catch (err) {
+    handleError(err);
+  }
 }
 
 async function craftShield() {
-  await ensureConnected();
+  try {
+    await ensureConnected();
 
-  const items = new ethers.Contract(
-    ADDRESSES.gameItems,
-    erc1155Abi,
-    signer
-  );
+    const itemsRead = new ethers.Contract(ADDRESSES.gameItems, erc1155Abi, provider);
+    const wood = await itemsRead.balanceOf(userAddress, 2);
+    const iron = await itemsRead.balanceOf(userAddress, 3);
 
-  setStatus("Crafting Dragon Shield...");
-  const tx = await items.craft(101);
-  await tx.wait();
+    if (wood < 15n || iron < 5n) {
+      setStatus("Cannot craft Shield: need 15 WOOD + 5 IRON", "error");
+      return;
+    }
 
-  setStatus(`Dragon Shield crafted. Tx: ${tx.hash}`);
-  await loadItems();
+    const items = new ethers.Contract(ADDRESSES.gameItems, erc1155Abi, signer);
+    const tx = await items.craft(101);
+
+    await waitTx(tx, "Craft Shield");
+    await loadItems();
+  } catch (err) {
+    handleError(err);
+  }
 }
 
 async function loadGovernorData() {
   await ensureConnected();
 
-  const governor = new ethers.Contract(
-    ADDRESSES.governor,
-    governorAbi,
-    provider
-  );
+  const governor = new ethers.Contract(ADDRESSES.governor, governorAbi, provider);
 
-  const votingDelay = await governor.votingDelay();
-  const votingPeriod = await governor.votingPeriod();
-  const proposalThreshold = await governor.proposalThreshold();
+  const delay = await governor.votingDelay();
+  const period = await governor.votingPeriod();
+  const threshold = await governor.proposalThreshold();
 
-  document.getElementById("votingDelay").innerText =
-    `Voting Delay: ${votingDelay}`;
-  document.getElementById("votingPeriod").innerText =
-    `Voting Period: ${votingPeriod}`;
-  document.getElementById("proposalThreshold").innerText =
-    `Proposal Threshold: ${ethers.formatEther(proposalThreshold)}`;
+  $("votingDelay").innerText = `Voting Delay: ${delay}`;
+  $("votingPeriod").innerText = `Voting Period: ${period}`;
+  $("proposalThreshold").innerText = `Proposal Threshold: ${ethers.formatEther(threshold)}`;
 
-  setStatus("Governor data loaded");
+  setStatus("Governor data loaded", "success");
 }
 
 async function loadFactoryData() {
   await ensureConnected();
 
-  const factory = new ethers.Contract(
-    ADDRESSES.ammFactory,
-    factoryAbi,
-    provider
-  );
+  const factory = new ethers.Contract(ADDRESSES.ammFactory, factoryAbi, provider);
 
   const owner = await factory.owner();
 
-  let firstPair = "-";
+  let firstPair = "No pairs created yet";
   try {
     firstPair = await factory.allPairs(0);
-  } catch (error) {
-    firstPair = "No pairs created yet";
-  }
+  } catch (_) {}
 
-  document.getElementById("factoryOwner").innerText = `Owner: ${owner}`;
-  document.getElementById("pairCount").innerText = `First Pair: ${firstPair}`;
+  $("factoryOwner").innerText = `Owner: ${owner}`;
+  $("firstPair").innerText = `First Pair: ${firstPair}`;
 
-  setStatus("AMM factory data loaded");
+  setStatus("AMM factory data loaded", "success");
 }
-document.getElementById("connectBtn").addEventListener("click", connectWallet);
-document.getElementById("loadGovBtn").addEventListener("click", loadGovernanceData);
-document.getElementById("delegateBtn").addEventListener("click", delegateVotes);
-document.getElementById("loadVaultBtn").addEventListener("click", loadVaultData);
-document.getElementById("approveVaultBtn").addEventListener("click", approveVault);
-document.getElementById("depositVaultBtn").addEventListener("click", depositToVault);
-document.getElementById("loadItemsBtn").addEventListener("click", loadItems);
-document.getElementById("craftSwordBtn").addEventListener("click", craftSword);
-document.getElementById("craftShieldBtn").addEventListener("click", craftShield);
-document.getElementById("loadGovernorBtn").addEventListener("click", loadGovernorData);
-document.getElementById("loadFactoryBtn").addEventListener("click", loadFactoryData);
+
+async function createPair() {
+  try {
+    await ensureConnected();
+
+    const tokenA = $("tokenAInput").value || ADDRESSES.tokenA;
+    const tokenB = $("tokenBInput").value || ADDRESSES.tokenB;
+
+    if (!ethers.isAddress(tokenA) || !ethers.isAddress(tokenB)) {
+      setStatus("Invalid token address", "error");
+      return;
+    }
+
+    const factory = new ethers.Contract(ADDRESSES.ammFactory, factoryAbi, signer);
+    const tx = await factory.createPair(tokenA, tokenB);
+
+    await waitTx(tx, "Create AMM pair");
+    await loadFactoryData();
+  } catch (err) {
+    handleError(err);
+  }
+}
+
+async function refreshDashboard() {
+  try {
+    await ensureConnected();
+    await loadGovernanceData();
+    await loadVaultData();
+    await loadItems();
+    await loadGovernorData();
+    await loadFactoryData();
+  } catch (err) {
+    handleError(err);
+  }
+}
+const PROPOSAL_STATES = [
+  "Pending", "Active", "Canceled", "Defeated",
+  "Succeeded", "Queued", "Expired", "Executed"
+];
+
+async function loadProposalState() {
+  try {
+    await ensureConnected();
+    const id = $("proposalIdInput").value;
+    if (!id) return alert("Enter proposal ID");
+
+    const governor = new ethers.Contract(ADDRESSES.governor, governorAbi, provider);
+    const state = await governor.state(BigInt(id));
+    const hasVoted = await governor.hasVoted(BigInt(id), userAddress);
+
+    $("proposalState").innerText = `State: ${PROPOSAL_STATES[Number(state)] || state}`;
+    $("proposalVoted").innerText = `You voted: ${hasVoted ? "Yes" : "No"}`;
+    setStatus("Proposal loaded", "success");
+  } catch (err) {
+    handleError(err);
+  }
+}
+
+async function castVote(support) {
+  try {
+    await ensureConnected();
+    const id = $("proposalIdInput").value;
+    if (!id) return alert("Enter proposal ID");
+
+    const governor = new ethers.Contract(ADDRESSES.governor, governorAbi, signer);
+    const tx = await governor.castVote(BigInt(id), support);
+    await waitTx(tx, `Vote ${["Against","For","Abstain"][support]}`);
+    await loadProposalState();
+  } catch (err) {
+    handleError(err);
+  }
+}
+
+$("loadProposalBtn").addEventListener("click", loadProposalState);
+$("voteForBtn").addEventListener("click", () => castVote(1));
+$("voteAgainstBtn").addEventListener("click", () => castVote(0));
+$("voteAbstainBtn").addEventListener("click", () => castVote(2));
+$("connectBtn").addEventListener("click", connectWallet);
+$("refreshBtn").addEventListener("click", refreshDashboard);
+$("loadGovBtn").addEventListener("click", loadGovernanceData);
+$("delegateBtn").addEventListener("click", delegateVotes);
+$("loadVaultBtn").addEventListener("click", loadVaultData);
+$("approveVaultBtn").addEventListener("click", approveVault);
+$("depositVaultBtn").addEventListener("click", depositVault);
+$("withdrawVaultBtn").addEventListener("click", withdrawVault);
+$("loadItemsBtn").addEventListener("click", loadItems);
+$("craftSwordBtn").addEventListener("click", craftSword);
+$("craftShieldBtn").addEventListener("click", craftShield);
+$("loadGovernorBtn").addEventListener("click", loadGovernorData);
+$("loadFactoryBtn").addEventListener("click", loadFactoryData);
+$("createPairBtn").addEventListener("click", createPair);
