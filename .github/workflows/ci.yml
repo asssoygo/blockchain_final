@@ -24,8 +24,8 @@ jobs:
       - name: Run tests
         run: forge test --via-ir
 
-      - name: Run coverage
-        run: forge coverage --via-ir
+       - name: Run coverage
+        run: forge coverage --no-match-path "script/*"
 
       - name: Install Python
         uses: actions/setup-python@v5
