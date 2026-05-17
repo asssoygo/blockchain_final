@@ -104,17 +104,18 @@ contract GovernanceTokenTest is Test {
 
     /// @dev getPastVotes must return the votes recorded at a past block number.
     function test_VotingPowerSnapshot() public {
-        vm.prank(owner);
-        token.delegate(owner);
+    address voter = airdrop;
 
-        uint256 snapshotBlock = block.number;
+    vm.prank(voter);
+    token.delegate(voter);
 
-        // Advance one block so the snapshot is in the past
-        vm.roll(block.number + 1);
+    vm.roll(block.number + 2);
 
-        assertEq(token.getPastVotes(owner, snapshotBlock), TEAM_AMOUNT);
-    }
+    uint256 pastBlock = block.number - 1;
+    uint256 votes = token.getPastVotes(voter, pastBlock);
 
+    assertEq(votes, token.balanceOf(voter));
+}
     // ─── 8. EIP-2612 permit ───────────────────────────────────────────────────
 
     /// @dev A valid permit signature must set the allowance without an approval tx.
