@@ -26,3 +26,4 @@ node_modules/
 # Coverage
 lcov.info
 coverage/
+.claude/
