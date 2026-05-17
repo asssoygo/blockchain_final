@@ -1,0 +1,28 @@
+# Foundry
+cache/
+out/
+broadcast/
+
+# Dependencies — keep lib/ but ignore nested .git directories
+lib/**/.git/
+
+# Environment
+.env
+.env.local
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Coverage
+lcov.info
+coverage/
