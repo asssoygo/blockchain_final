@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # DeFi Super-App: AMM + Vault + DAO Governance
 
 ## Overview
@@ -263,3 +264,6 @@ GitHub Actions pipeline automatically runs:
 Asylkhan Kozhanov
 Aldiyar Bazarbayev
 Alikhan Sekenov
+=======
+# blockchain_final
+>>>>>>> 710709c97ead30238beeb8646ead17a4cc9de064
