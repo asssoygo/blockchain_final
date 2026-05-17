@@ -1,0 +1,95 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0f172a;
+  color: #f1f5f9;
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  padding: 40px;
+}
+
+.container {
+  max-width: 1450px;
+  margin: 0 auto;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+header h1 {
+  font-size: 52px;
+  margin-bottom: 10px;
+}
+
+header p {
+  color: #93c5fd;
+  margin-bottom: 12px;
+}
+
+button {
+  background: #2563eb;
+  border: none;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 15px;
+  margin: 6px 4px 0 0;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+input {
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #f8fafc;
+  outline: none;
+}
+
+#wallet,
+#network {
+  color: #38bdf8;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: #1e293b;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+.card h2 {
+  margin-bottom: 18px;
+  color: #38bdf8;
+}
+
+.card p {
+  margin-top: 10px;
+  color: #cbd5e1;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+#status {
+  color: #facc15;
+}

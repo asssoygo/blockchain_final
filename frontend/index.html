@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DeFi Super-App</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>DeFi Super-App</h1>
+      <p>AMM + Vault + DAO Governance on Arbitrum Sepolia</p>
+      <button id="connectBtn">Connect Wallet</button>
+      <p id="wallet">Wallet: not connected</p>
+      <p id="network">Network: -</p>
+    </header>
+
+    <section class="card">
+      <h2>Protocol Contracts</h2>
+      <p><b>GovernanceToken:</b> 0x9Dc80829f5D95b8aBC89e2b2711Ce75Bfa6dDc67</p>
+      <p><b>Mock Asset:</b> 0xa0CC573865B6800f9E9577b39B289FFe0cB7F8C9</p>
+      <p><b>YieldVault:</b> 0x10C38C37455084Bb060d7c385145b6039F99bb6b</p>
+      <p><b>GameItems:</b> 0x20a91c4E223f3670aCD6863B60c6aC9bFAa52de8</p>
+      <p><b>Governor:</b> 0x320E10Ab8531908dEb19927612EDD82fff3E9A79</p>
+      <p><b>AMMFactory:</b> 0xFD24fd97BD869819Dc77bc4bB92F28E8C3687353</p>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Governance Token</h2>
+        <button id="loadGovBtn">Load Token Data</button>
+        <p id="govBalance">Balance: -</p>
+        <p id="votingPower">Voting Power: -</p>
+        <button id="delegateBtn">Delegate Votes to Myself</button>
+      </div>
+
+      <div class="card">
+        <h2>Vault</h2>
+        <button id="loadVaultBtn">Load Vault Data</button>
+        <p id="vaultAsset">Asset: -</p>
+        <p id="assetBalance">My Asset Balance: -</p>
+        <p id="totalAssets">Vault Total Assets: -</p>
+        <p id="shareBalance">My Vault Shares: -</p>
+
+        <input id="depositAmount" type="text" placeholder="Amount, example: 10" />
+        <button id="approveVaultBtn">Approve Vault</button>
+        <button id="depositVaultBtn">Deposit to Vault</button>
+      </div>
+
+      <div class="card">
+        <h2>Game Items</h2>
+        <button id="loadItemsBtn">Load Items</button>
+        <p id="goldBalance">Gold ID 1: -</p>
+        <p id="woodBalance">Wood ID 2: -</p>
+        <p id="ironBalance">Iron ID 3: -</p>
+        <p id="swordBalance">Legendary Sword ID 100: -</p>
+        <p id="shieldBalance">Dragon Shield ID 101: -</p>
+
+        <button id="craftSwordBtn">Craft Legendary Sword</button>
+        <button id="craftShieldBtn">Craft Dragon Shield</button>
+      </div>
+
+      <div class="card">
+        <h2>Governance</h2>
+        <button id="loadGovernorBtn">Load Governor Info</button>
+        <p id="votingDelay">Voting Delay: -</p>
+        <p id="votingPeriod">Voting Period: -</p>
+        <p id="proposalThreshold">Proposal Threshold: -</p>
+      </div>
+
+      <div class="card">
+        <h2>AMM Factory</h2>
+        <button id="loadFactoryBtn">Load Factory Info</button>
+        <p id="factoryOwner">Owner: -</p>
+        <p id="pairCount">Pair Count: -</p>
+      </div>
+
+      <div class="card">
+        <h2>Transaction Status</h2>
+        <p id="status">Status: waiting...</p>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
