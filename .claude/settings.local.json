@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(forge build *)",
+      "Bash(forge test *)",
+      "Bash(cast sig *)",
+      "Bash(findstr MAINNET)",
+      "Bash(forge coverage *)"
+    ]
+  }
+}
